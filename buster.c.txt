@@ -1,0 +1,162 @@
+// buster.c
+/*
+ * need to deconflict (S) which appears in object code
+ *
+ * do we need to lower/(same)-case block before searching?
+ *
+ * would be nice to count occurrances of each target
+ *	modify scan to continue scanning in same block after hit
+ *	use post-processor
+ */
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+
+#define OK 0
+#define ERROR (-1)
+#define BLK_SZ 512
+#define LOOP for(;;)
+
+#define DEBUG 0
+
+extern errno;
+
+// GLOBAL  ----------------------------------------------------------------
+// see partition options with disklabel /dev/ad0s1
+// "/dev/ad0s1a"  /
+// "/dev/ad0s1b"  swap only
+// "/dev/ad0s1c"  whole disk
+// "/dev/ad0s1e"  /var
+
+/*
+8 partitions:
+#        size   offset    fstype   [fsize bsize bps/cpg]
+  a:   102400   524288    4.2BSD     2048 16384   102   # (Cyl.  520*- 621*)
+  b:   524288        0      swap                        # (Cyl.    0 - 520*)
+  c: 33683265        0    unused        0     0         # (Cyl.    0 - 33415*)
+  e:   102400   626688    4.2BSD     2048 16384   102   # (Cyl.  621*- 723*)
+  f:  2048000   729088    4.2BSD     2048 16384    90   # (Cyl.  723*- 2755*)
+  g:  4194304  2777088    4.2BSD     2048 16384    89   # (Cyl. 2755*- 6916*)
+  h: 26711873  6971392    4.2BSD     2048 16384    89   # (Cyl. 6916*- 33415*)
+*/
+
+char * fname;
+int f_id;
+char bufr[BLK_SZ+1];
+
+char * targets[] = {
+	"TOP SECRET",
+	"(TS)",
+// avoid SECRETARY
+	"SECRET ",
+	"SECRET.",
+	"S E C R E T ",
+//	"(S)",
+	"CONFIDENTIAL",
+	"C O N F I D ",
+//	"(C)",  conflicts with the copyright symbol
+	"C L A S S I F "
+	"CLASSIFIED",
+	"NOFORN",
+	NULL };
+
+//  blk_read ----------------------------------------------------------------
+//  reads a single block from global file descriptor and stores in global bufr
+//
+int blk_read(void)
+{
+	int bytes;
+	static blks_read = 0;
+
+	bytes = read(f_id, bufr, BLK_SZ);
+//	printf("read block %d, %d bytes, errno = %d\n", blks_read, bytes,errno);
+	if (bytes != BLK_SZ)
+	{
+		if (bytes == 0) return EOF;
+		if (errno == 0)
+		{
+			// at end of file
+			return OK;
+		}
+		return ERROR;
+	}
+	blks_read++;
+	return OK;
+}
+
+//  scan_blk ----------------------------------------------------------------
+// returns pointer to target string found
+//
+char * scan_blk(void)	// look for targets in bufr[]
+{
+	char ** target;
+	char * cp;
+	int i;
+/*
+	translate null characters to blanks in bufr
+	ie, make it one big string
+*/
+	for (i=0; i< 512; i++)
+	{
+		if (bufr[i] == 0) bufr[i] = ' ';
+	}
+	bufr[BLK_SZ] = 0;
+// look for each target
+	target = targets;
+	LOOP
+	{
+		if (*target == NULL) break;
+		cp = strnstr(bufr, *target, 512);
+		if (cp) break;
+		target++;
+	}
+	if (cp) return *target;
+	else return NULL;
+}
+
+//  main ----------------------------------------------------------------
+int main(int argc, char * argv[])
+{
+	int rc;
+	int c;
+	int tnum;
+	char * cp;
+	int bloks_found;
+	int bloks_read;
+
+	printf("Buster says hello\n");
+	if (argc == 1) exit(ERROR);
+	fname = argv[1];
+	f_id = open(fname, O_RDONLY);
+	if (f_id == ERROR) 
+	{
+		printf("buster: can't open file:%s\n",fname);
+		exit(ERROR);
+	}
+	printf("opened file %s\n",fname);
+	bloks_read = 0;
+	bloks_found = 0;
+	LOOP
+	{
+		rc = blk_read();
+		if (rc == EOF) break; // nothing to read
+		if (rc == ERROR) break; // different problem
+		bloks_read++;
+		if ((bloks_read % 2048)==0) 
+		{
+			fprintf(stderr,"*");
+		}
+		if (cp=scan_blk())
+		{
+			printf("Hit number %d, %s found in: \n%s\n",++bloks_found, cp,bufr);
+			printf("*********************************************************\n");
+//			printf("hit enter to continue\n");
+//			c = getchar();
+//			sleep(5);
+		}
+	}
+	printf("Found %d block(s) with target info out of %d blocks\n",bloks_found,bloks_read);
+	return 0;
+}
