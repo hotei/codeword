@@ -1,18 +1,12 @@
-// codeword.go (c) 2013-2014 David Rook
+// codeword.go (c) 2013-2015 David Rook
 
 /*
-	2014-02-08 enhancement - only print hit first time
-	2014-02-04 working version 0.0.2
-	2013-03-20 working version 0.0.1
-	2013-03-28 started version 0.0.0
 
 	typical usage: codeword | tee codeword-results.txt
 
 */
 
 package main
-
-// BUG(mdr): TODO - fold case or let alphaTable do that for you ?
 
 import (
 	// standard lib pkgs
@@ -45,7 +39,7 @@ type targetRec struct {
 }
 
 const (
-	G_version = "codeword.go   (c) 2013-2014 David Rook version 0.0.3"
+	G_version = "codeword.go   (c) 2013-2015 David Rook version 0.0.3"
 
 	// these could be flags
 	g_foldASCII = false

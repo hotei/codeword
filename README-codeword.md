@@ -28,6 +28,7 @@ search for their "secret project keywords" like "Project Unobtanium".
 * Fast - typically runs at near max HD read speed.  However, it will still take hours 
 per terabyte.  1e12 / 1e8 = 10,000 seconds or about 3 hours at 100MB/sec.
 * Shows progress bar during scan
+* language agnostic - just substitute appropriate targets
 
 ### Limitations
 
@@ -42,6 +43,8 @@ you must be root to run this program.</font>
 * targets are literals joined with "OR", you can't look for "TOP" AND "SECRET" AND "ULTRA"
  however this is easy to change in scanBlock()
 Despite these weaknesses in method - in actual use it proved to be a valuable first check.  
+* please note that storing the __codeword__ program source or object on the target drive will
+_probably_ cause a hit on that sector.
 
 ### Usage
 
@@ -49,19 +52,22 @@ Typical usage is :
 
 ```codeword | tee codeword-results.txt```
 
-### 
+
 ### TO DO
 * Essential:
- * TBD
+	* TBD
 * Nice to have:
- * Disk to be checked should probably be a flag -disk="/dev/sda"
+	* Disk to be checked should probably be a flag -disk="/dev/sda" vs compiled in
 * Nice, but No Immediate Rqmt
- * Option for RE2 as matching mechanism 
+	* use RE2 as matching mechanism
+	* use a flag option to fold case?
 
 ### Change Log
-* 2014-02-08 Enhance fold ASCII > 127 if requested (default is false)
+* 2014-02-08 Enhance fold ASCII > 127 if requested (default is false) version 0.0.3
 * 2014-02-08 Store/Display hits only once per run.  map hits[sha256]int  if new hit same as
 one in map just increment hitcount, dont redisplay
+*	2014-02-04 working version 0.0.2
+*	2013-03-20 working version 0.0.1
 
 Comments can be sent to <hotei1352@gmail.com> or to user "hotei" at github.com.
 License is BSD-two-clause, in file "LICENSE"
@@ -69,7 +75,8 @@ License is BSD-two-clause, in file "LICENSE"
 ### Resources
 
 * [Wikipedia: Classified Information][1]
-* [How the US DoD marks documents] [2]
+* [How the US DoD marks documents - DoD 5200-1ph Google link is currently a 404 error] [2]
+* [Dod 5200-1.ph stored at a US University][6]
 * [go reference spec] [3]
 * [go package docs] [4]
 * [codeword][5] program docs
@@ -79,7 +86,7 @@ License is BSD-two-clause, in file "LICENSE"
 [3]: http://golang.org/ref/spec/ "go reference spec"
 [4]: http://golang.org/pkg/ "go package docs"
 [5]: http://github.com/hotei/codeword "github.com/hotei/codeword"
-
+[6]: http://biotech.law.lsu.edu/blaw/dodd/corres/pdf2/p52001ph.pdf "5200-1.ph"
  
 > Redistribution and use in source and binary forms, with or without modification, are
 > permitted provided that the following conditions are met:
